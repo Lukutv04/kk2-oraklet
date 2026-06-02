@@ -35,14 +35,19 @@ class LLMOutput(BaseModel):
 
 class LLMRunner(Runnable[PromptOutput, LLMOutput]):
     def __init__(self):
-        self.pipe = pipeline(
-            "text-generation",
-            model="HuggingFaceTB/SmolLM2-135M-Instruct"
-        )
+        self.pipe = None
 
     def invoke(self, inp: PromptOutput) -> LLMOutput:
+        if self.pipe is None:
+            from transformers import pipeline
+            self.pipe = pipeline(
+                "text-generation",
+                model="HuggingFaceTB/SmolLM2-135M-Instruct"
+            )
+
         out = self.pipe(inp.prompt, max_new_tokens=150)[0]["generated_text"]
         return LLMOutput(raw=out)
+
 
 
 # Response Parser
@@ -53,9 +58,11 @@ class ParsedOutput(BaseModel):
     answer: str
     model: str = "HuggingFaceTB/SmolLM2-135M-Instruct"
 
+
 class ResponseParser(Runnable[LLMOutput, ParsedOutput]):
     def invoke(self, inp: LLMOutput) -> ParsedOutput:
         return ParsedOutput(
             question="",
             answer=inp.raw.strip()
         )
+
