@@ -1,5 +1,7 @@
 from fastapi import FastAPI, UploadFile, HTTPException
 from app.data import DataStore
+from app.schemas import AskRequest, AskResponse
+from app.chain.pipeline import oraklet
 
 app = FastAPI()
 store = DataStore()
@@ -22,3 +24,10 @@ def stats():
         raise HTTPException(404, "Inget dataset uppladdat.")
     return df.describe().to_dict()
 
+@app.post("/ai/ask", response_model=AskResponse)
+def ask(req: AskRequest):
+    df = store.get()
+    if df is None:
+        raise HTTPException(400, "Ladda upp dataset först.")
+    result = oraklet.invoke({"question": req.question, "df": df})
+    return result
