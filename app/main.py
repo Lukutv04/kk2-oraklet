@@ -4,8 +4,9 @@ from app.schemas import AskRequest, AskResponse
 from app.chain.pipeline import oraklet
 from app.chain.steps import PromptInput
 
-app = FastAPI()
+app = FastAPI(title="KK2 – Oraklet", version="1.0.0")
 store = DataStore()
+
 
 @app.get("/")
 def root():
@@ -16,19 +17,30 @@ def root():
 def health():
     return {"status": "ok"}
 
+
 @app.post("/data/upload")
 async def upload(file: UploadFile):
-    if not file.filename.endswith(".csv"):
+    if not file.filename.lower().endswith(".csv"):
         raise HTTPException(400, "Endast CSV-filer tillåtna.")
-    df = store.load_csv(file)
-    return store.metadata(df)
+
+    try:
+        df = store.load_csv(file)
+        return store.metadata(df)
+    except Exception as e:
+        raise HTTPException(500, f"Kunde inte läsa CSV-filen: {e}")
+
 
 @app.get("/data/stats")
 def stats():
     df = store.get()
     if df is None:
         raise HTTPException(404, "Inget dataset uppladdat.")
-    return df.describe().to_dict()
+
+    try:
+        return df.describe().to_dict()
+    except Exception as e:
+        raise HTTPException(500, f"Kunde inte generera statistik: {e}")
+
 
 @app.post("/ai/ask", response_model=AskResponse)
 def ask(req: AskRequest):
@@ -36,13 +48,19 @@ def ask(req: AskRequest):
     if df is None:
         raise HTTPException(400, "Ladda upp dataset först.")
 
-    result = oraklet.invoke(
-        PromptInput(
-            question=req.question,
-            df=df
+    try:
+        result = oraklet.invoke(
+            PromptInput(
+                question=req.question,
+                df=df
+            )
         )
-    )
+    except Exception as e:
+        raise HTTPException(500, f"AI-modellen kunde inte generera ett svar: {e}")
 
-    return AskResponse(answer=result.answer)
+    # Säkerställ att svaret alltid är en sträng
+    answer = getattr(result, "answer", None)
+    if not isinstance(answer, str):
+        answer = str(answer)
 
-
+    return AskResponse(answer=answer)
