@@ -14,7 +14,7 @@ except ImportError:
     pipeline = None
 
 
-MODEL_NAME = "microsoft/phi-1_5"
+MODEL_NAME = "HuggingFaceTB/SmolLM2-135M-Instruct"
 
 
 # Prompt Builder
@@ -63,13 +63,16 @@ class LLMRunner(Runnable[PromptOutput, LLMOutput]):
             tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
             model = AutoModelForCausalLM.from_pretrained(
                 MODEL_NAME,
-                torch_dtype=torch.float32
+                torch_dtype=torch.float32,
+                device_map="cpu"
             )
             return pipeline(
                 "text-generation",
                 model=model,
                 tokenizer=tokenizer,
-                max_new_tokens=100
+                max_new_tokens=150,
+                temperature=0.0,
+                do_sample=False
             )
         except Exception as exc:
             self.load_error = f"{type(exc).__name__}: {exc}"
