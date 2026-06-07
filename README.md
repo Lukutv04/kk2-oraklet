@@ -42,17 +42,17 @@ Resultatet returneras som:
 
 ##  Projektstruktur
 app/
- ├── main.py
- ├── data.py
- ├── schemas.py
- ├── chain/
- │    ├── runnable.py
- │    ├── steps.py
- │    └── pipeline.py
- └── tests/
-      ├── test_endpoints.py
-      ├── test_chain.py
-      └── test_ai_mocked.py
+ main.py
+ data.py
+ schemas.py
+ chain/
+  runnable.py
+  steps.py
+    pipeline.py
+      tests/
+         test_endpoints.py
+         test_chain.py
+         test_ai_mocked.py
 
 
 ##  Kedjan (Runnable‑design)
