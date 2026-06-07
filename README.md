@@ -1,5 +1,6 @@
 # KK2 – Oraklet
 Ett FastAPI‑baserat backendprojekt som laddar upp dataset, visar statistik och använder en kedja av “Runnable”-steg för att generera AI‑svar baserat på datan.
+Projektet innehåller även fallback‑logik som besvarar enkla datasetfrågor korrekt, vilket gör systemet stabilt även med en liten lokal modell.
 
 ##  Funktionalitet
 Projektet erbjuder tre huvuddelar:
@@ -16,19 +17,28 @@ Returnerar df.describe() som dictionary.
 Endpoint: POST /ai/ask  
 Kör en kedja av tre steg:
 
-PromptBuilder – bygger en prompt baserat på datasetets statistik
+- PromptBuilder – bygger en prompt baserat på datasetets statistik och hanterar fallback‑frågor (t.ex. antal kolumner, antal rader, vanligaste artist).
 
-LLMRunner – kör en textgenereringsmodell (lazy‑load)
+- LLMRunner – kör en lokal textgenereringsmodell med optimerade inställningar (temperature=0, repetition_penalty, max_new_tokens).
 
-ResponseParser – formaterar svaret till rätt struktur
+- ResponseParser – formaterar svaret till rätt struktur.
 
 Resultatet returneras som:
 
 {
   "question": "...",
   "answer": "...",
-  "model": "HuggingFaceTB/SmolLM2-135M-Instruct"
+  "model": "SmolLM2 + fallback"
 }
+
+## Exempel på frågor som stöds
+“Hur många kolumner finns i datasetet?”
+
+“Hur många rader finns i datasetet?”
+
+“Vilken artist har flest låtar?”
+
+“Vad visar statistiken?”
 
 ##  Projektstruktur
 app/
@@ -54,7 +64,7 @@ RunnableLambda – wrapper för funktioner
 
 RunnableSequence – kedjar ihop flera steg med |‑operatorn
 
-Det gör att kedjan kan skrivas som:
+Kedjan defenieras som :
 
 oraklet = RunnableSequence(
     PromptBuilder(),
@@ -110,6 +120,11 @@ uv run pytest app/tests -v
 - UV (package manager)
 
 ##  Övrigt
-- Modellen laddas “lazy‑load” i invoke() för att undvika PyTorch‑krav i tester.
+
+- Modellen laddas “lazy‑load” i LLMRunner för att undvika PyTorch‑krav i tester.
+
+- Temperatur=0, repetition_penalty och max_new_tokens används för att undvika loops och hålla svaren stabila.
+
+- En fallback‑logik hanterar enkla datasetfrågor för att säkerställa korrekta svar.
 
 - Projektet är strukturerat för att vara lätt att utöka med fler steg i kedjan.
