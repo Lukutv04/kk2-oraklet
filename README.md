@@ -8,6 +8,7 @@ Projektet erbjuder tre huvuddelar:
 ### 1. Ladda upp dataset
 Endpoint: POST /data/upload  
 Tar emot en CSV‑fil, läser in den och sparar den i en intern datalagring.
+Filen måste sluta på `.csv`.
 
 ### 2. Visa statistik
 Endpoint: GET /data/stats  
@@ -25,34 +26,41 @@ Kör en kedja av tre steg:
 
 Resultatet returneras som:
 
+```json
 {
   "question": "...",
   "answer": "...",
   "model": "SmolLM2 + fallback"
 }
+```
 
 ## Exempel på frågor som stöds
-“Hur många kolumner finns i datasetet?”
+- “Hur många kolumner finns i datasetet?”
 
-“Hur många rader finns i datasetet?”
+- “Hur många rader finns i datasetet?”
 
-“Vilken artist har flest låtar?”
+- “Vilken artist har flest låtar?”
 
-“Vad visar statistiken?”
+- “Vad visar statistiken?”
 
 ##  Projektstruktur
+```text
 app/
- main.py
- data.py
- schemas.py
- chain/
-  runnable.py
-  steps.py
-    pipeline.py
-      tests/
-         test_endpoints.py
-         test_chain.py
-         test_ai_mocked.py
+  main.py
+  data.py
+  schemas.py
+  chain/
+    runnable.py
+    steps.py
+      pipeline.py
+        tests/
+    test_endpoints.py
+    test_chain.py
+    test_ai_mocked.py
+```
+
+
+
 
 
 ##  Kedjan (Runnable‑design)
@@ -91,20 +99,32 @@ Alla tester passerar:
 
 
 ##  Köra projektet
+
 Installera beroenden: 
 
+```bash
 uv sync
+```
 
 
-Starta Servern :
+## Starta Servern :
 
+```bash
 uv run uvicorn app.main:app --reload
+```
+
+## Öppna sedan Swagger UI:
+
+```text
+http://127.0.0.1:8000/docs
+```
 
 
-Köra tester :
+## Köra tester :
 
+```bash
 uv run pytest app/tests -v
-
+```
 
 ##  Tekniker
 - FastAPI
