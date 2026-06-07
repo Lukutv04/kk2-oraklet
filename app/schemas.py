@@ -4,6 +4,5 @@ class AskRequest(BaseModel):
     question: str
 
 class AskResponse(BaseModel):
-    question: str
     answer: str
-    model: str
+

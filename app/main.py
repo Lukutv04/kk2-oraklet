@@ -2,9 +2,15 @@ from fastapi import FastAPI, UploadFile, HTTPException
 from app.data import DataStore
 from app.schemas import AskRequest, AskResponse
 from app.chain.pipeline import oraklet
+from app.chain.steps import PromptInput
 
 app = FastAPI()
 store = DataStore()
+
+@app.get("/")
+def root():
+    return {"message": "Välkommen till KK2 – Oraklet!"}
+
 
 @app.get("/health")
 def health():
@@ -29,5 +35,14 @@ def ask(req: AskRequest):
     df = store.get()
     if df is None:
         raise HTTPException(400, "Ladda upp dataset först.")
-    result = oraklet.invoke({"question": req.question, "df": df})
-    return result
+
+    result = oraklet.invoke(
+        PromptInput(
+            question=req.question,
+            df=df
+        )
+    )
+
+    return AskResponse(answer=result.answer)
+
+

@@ -1,10 +1,23 @@
 from pydantic import BaseModel
-from transformers import pipeline
 from app.chain.runnable import Runnable
+
+try:
+    import torch
+except ImportError:
+    torch = None
+
+try:
+    from transformers import AutoModelForCausalLM, AutoTokenizer, pipeline
+except ImportError:
+    AutoModelForCausalLM = None
+    AutoTokenizer = None
+    pipeline = None
+
+
+MODEL_NAME = "microsoft/phi-1_5"
 
 
 # Prompt Builder
-
 
 class PromptInput(BaseModel):
     question: str
@@ -29,35 +42,59 @@ Svara kort och tydligt.
 
 # LLM Runner
 
-
 class LLMOutput(BaseModel):
     raw: str
 
 class LLMRunner(Runnable[PromptOutput, LLMOutput]):
     def __init__(self):
-        self.pipe = None
+        self.pipeline = None
+        self.load_error = None
+
+    def _load_pipeline(self):
+        if torch is None:
+            self.load_error = "PyTorch saknas."
+            return None
+
+        if pipeline is None or AutoTokenizer is None or AutoModelForCausalLM is None:
+            self.load_error = "Transformers saknas."
+            return None
+
+        try:
+            tokenizer = AutoTokenizer.from_pretrained(MODEL_NAME)
+            model = AutoModelForCausalLM.from_pretrained(
+                MODEL_NAME,
+                torch_dtype=torch.float32
+            )
+            return pipeline(
+                "text-generation",
+                model=model,
+                tokenizer=tokenizer,
+                max_new_tokens=100
+            )
+        except Exception as exc:
+            self.load_error = f"{type(exc).__name__}: {exc}"
+            return None
 
     def invoke(self, inp: PromptOutput) -> LLMOutput:
-        if self.pipe is None:
-            from transformers import pipeline
-            self.pipe = pipeline(
-                "text-generation",
-                model="HuggingFaceTB/SmolLM2-135M-Instruct"
-            )
+        if self.pipeline is None:
+            self.pipeline = self._load_pipeline()
 
-        out = self.pipe(inp.prompt, max_new_tokens=150)[0]["generated_text"]
-        return LLMOutput(raw=out)
+        if self.pipeline is None:
+            return LLMOutput(raw="AI-modellen kunde inte startas.")
 
+        try:
+            out = self.pipeline(inp.prompt, return_full_text=False)
+            return LLMOutput(raw=out[0]["generated_text"])
+        except Exception:
+            return LLMOutput(raw="AI-modellen kunde inte generera ett svar.")
 
 
 # Response Parser
 
-
 class ParsedOutput(BaseModel):
     question: str
     answer: str
-    model: str = "HuggingFaceTB/SmolLM2-135M-Instruct"
-
+    model: str = MODEL_NAME
 
 class ResponseParser(Runnable[LLMOutput, ParsedOutput]):
     def invoke(self, inp: LLMOutput) -> ParsedOutput:
@@ -65,4 +102,3 @@ class ResponseParser(Runnable[LLMOutput, ParsedOutput]):
             question="",
             answer=inp.raw.strip()
         )
-
