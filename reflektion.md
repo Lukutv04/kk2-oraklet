@@ -1,0 +1,11 @@
+# Reflektion över arbetet med KK2 - Oraklet
+
+## När jag började med det här projektet trodde jag att den svåraste delen skulle vara att få FastAPI att prata med en lokal AI‑modell. Det visade sig ganska snabbt att det inte var API:t som var problemet, utan själva modellen. SmolLM2 är extremt liten, och det märktes direkt när jag försökte få den att svara på frågor om datasetet. Den fastnade i loopar, upprepade ord och hittade på saker som inte hade någon koppling till datan.
+
+## Det gjorde att jag fick tänka om lite. Man ska inte försöka göra en modell smartare än den är, och jag skapade en alternativ lösning som bara tar de grundläggande datasetfrågorna och ger svaret direkt via Python. Detta var en godtagbar kompromiss, för även om man fortfarande använder modellen har man en mekanism som gör att man kan leverera rätt resultat när det då krävs. Det här känns mycket mer realistiskt som en lösning och skulle vara något som man verkligen kan bygga in i ett projekt om man arbetar med en begränsad modell som vi gjorde med den här.
+
+## Den här lösningen lärde mig också hur viktigt det är med en tydlig och flexibel metod när man bygger ett projekt som detta. Att dela upp allt i PromptBuilder, LLMRunner och ResponseParser gjorde så att det blev mycket enklare att felsöka och förbättra varje del för sig. Jag märkte också hur mycket små justeringar i modellen påverkar resultatet, till exempel temperature, repetition_penalty och max_new_tokens. Bara genom att justera dessa så kunde jag minska mängden av "random svar" ganska mycket.
+
+## Jag fick även en bättre förståelse för hur viktigt det är att ha bra felhantering i API:t. När man jobbar med en modell som ibland beter sig oförutsägbart/konstigt så är det skönt att veta att API:t inte kraschar bara för att modellen gör det. Det var därför jag la tid på att förbättra main.py och se till att alla endpoints svarar på ett kontrollerat och simpelt sätt.
+
+## Sammanfattningsvis så känner jag att projektet blev stabilare och mer genomtänkt än vad jag först trodde det skulle bli. Jag fick kämpa lite mer med AI‑delen än vad jag hade väntat mig, men det gjorde också att jag lärde mig mer om hur man bygger runt begränsningar och får ett system att fungera i praktiken. Det är kanske inte den smartaste AI:n i världen, men den gör det den ska och det är jag nöjd med i slutändan.
